@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-br">
 
 <head>
     <meta charset="UTF-8">
@@ -36,14 +36,14 @@
             </div>
             <nav>
                 <ul>
-                    <li><a href="">Sobre nós</a></li>
-                    <li><a href="">Contato</a></li>
-                    <li><a href="">Anuncie</a></li>
-                    <li><a href="">Comprar</a></li>
-                    <li><a href="">Alugar</a></li>
+                    <li><a href="?page=sobre">Sobre nós</a></li>
+                    <li><a href="?page=contato">Contato</a></li>
+                    <li><a href="?page=anuncie">Anuncie</a></li>
+                    <li><a href="?page=comprar">Comprar</a></li>
+                    <li><a href="?page=alugar">Alugar</a></li>
                 </ul>
             </nav>
-            <a href="" class="client-area-container">
+            <a href="?page=areacliente" class="client-area-container">
                 <i class="fa-solid fa-arrow-right-to-bracket"></i>
                 Área do Cliente
             </a>
