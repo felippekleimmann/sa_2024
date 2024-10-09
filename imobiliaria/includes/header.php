@@ -2,7 +2,7 @@
 session_start();
 ob_start();
 
-function isUserLoggedIn()
+function isUserLoggedIn(): bool
 {
     // Verifica se o usuário está logado e se o session_id() é válido
     if (isset($_SESSION['session_id']) && $_SESSION['session_id'] === session_id()) {
@@ -24,6 +24,7 @@ function logoutUser()
     header("Location: login.php");
     exit;
 }
+
 ?>
 
 <header class="main-header">
@@ -40,15 +41,13 @@ function logoutUser()
         <nav>
             <ul>
                 <?php
-                if (isset($_SESSION['session_id']) && $_SESSION['session_id'] === session_id() && $_SESSION['tipo'] == 1) { ?>
-                    <li><a href="?page=corretores">Corretores</a></li>
+                if (isUserLoggedIn()) { ?>
+                    <?php if ($_SESSION['tipo'] == 1): ?>
+                        <li><a href="?page=corretores">Corretores</a></li>
+                    <?php endif; ?>
                     <li><a href="?page=anuncios">Anuncios</a></li>
-                <?php
-                } elseif (isset($_SESSION['session_id']) && $_SESSION['session_id'] === session_id() && $_SESSION['tipo'] == 2) { ?>
-                    <li><a href="?page=anuncios">Anuncios</a></li>
-                <?php
-                } else {
-                ?>
+                    <li><a href="?page=sobre">Clientes</a></li>
+                <?php } else { ?>
                     <li><a href="?page=sobre">Sobre nós</a></li>
                     <li><a href="?page=contato">Contato</a></li>
                     <li><a href="?page=anuncie">Anuncie</a></li>
@@ -61,10 +60,24 @@ function logoutUser()
             </ul>
 
         </nav>
-        <a href="?page=area-do-corretor" class="client-area-container">
-            <i class="fa-solid fa-arrow-right-to-bracket"></i>
-            Área do Corretor
-        </a>
+        <?php
+        if (!isUserLoggedIn()):
+        ?>
+            <a href="?page=area-do-corretor" class="client-area-container">
+                <i class="fa-solid fa-arrow-right-to-bracket"></i>
+                Área Restrita
+            </a>
+        <?php else: ?>
+            <div class="logged-in-header-container">
+                <div class="user-name">
+                    Olá, <?php echo $_SESSION['name']; ?>
+                </div>
+                <a href="?page=logout" class="client-area-container">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                    Sair
+                </a>
+            </div>
+        <?php endif; ?>
     </div>
     <div class="menu-mobile-icon">
         <i class="fa-solid fa-bars"></i>

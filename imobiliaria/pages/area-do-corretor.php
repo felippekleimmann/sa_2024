@@ -7,6 +7,8 @@ if (!empty($_GET)) {
     }
 }
 
+$message_error = '';
+
 if (!empty($_POST)) {
     $sql = "SELECT * FROM user 
     WHERE cpf = '" . $_POST['cpf'] . "' 
@@ -21,15 +23,17 @@ if (!empty($_POST)) {
         $_SESSION['name'] = $userInfos->name;
         $_SESSION['tipo'] = $userInfos->user_type_id;
 
-        if ($userInfos->user_type_id == 1) {
-            header("Location: ?page=admin");
-        }
+        header("Location: ?page=admin-page");
 
-        if ($userInfos->user_type_id == 2) {
-            header("Location: ?page=corretor");
-        }
+        // if ($userInfos->user_type_id == 1) {
+
+        // }
+
+        // if ($userInfos->user_type_id == 2) {
+        //     header("Location: ?page=corretor");
+        // }
     } else {
-        echo 'Usuário ou senha incorretos.';
+        $message_error = 'Usuário ou senha incorretos.';
     }
 }
 
@@ -43,7 +47,7 @@ if (!empty($_POST)) {
             <div class="container">
                 <div class="row">
                     <div class="col-md-5 offset-md-1">
-                        <h1 class="title title-1">Entrar</h1>
+
                     </div>
                 </div>
             </div>
@@ -61,6 +65,12 @@ if (!empty($_POST)) {
                             <div class="form-group"><label for="contactSubject" class="label-control">Senha</label><input name="password" type="password" class="form-control" id="contactSubject" placeholder="Informe o assunto" value=""></div>
                             <button type="submit" name="button" class="btn btn-1">Entrar</button>
                         </form>
+
+                        <?php if ($message_error != ''): ?>
+                            <div class="message-error">
+                                <?php echo $message_error; ?>
+                            </div>
+                        <?php endif; ?>
                     </div>
                 </div>
             </div>

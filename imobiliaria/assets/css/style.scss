@@ -192,7 +192,7 @@ a {
         gap: 20px;
         margin-top: 30px;
 
-        a{
+        a {
             color: inherit;
         }
 
@@ -267,7 +267,7 @@ a {
 
 .propertie-item-inside {
 
-    .content{
+    .content {
         max-width: 1280px;
         margin-left: auto;
         margin-right: auto;
@@ -286,6 +286,28 @@ a {
     }
 }
 
-.result-content{
+.result-content {
     margin-bottom: 30px;
+}
+
+.logged-in-header-container {
+    display: flex;
+    column-gap: 50px;
+}
+
+.page-admin-style {
+    padding-top: 50px;
+    max-width: 1280px;
+    margin-left: auto;
+    margin-right: auto;
+
+    table {
+        width: 100%;
+    }
+}
+
+.message-error {
+    color: red;
+    font-size: 20px;
+    text-align: center;
 }
