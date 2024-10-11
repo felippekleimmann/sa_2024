@@ -42,16 +42,19 @@ function logoutUser()
             <ul>
                 <?php
                 if (isUserLoggedIn()) { ?>
-                    <?php if ($_SESSION['tipo'] == 1): ?>
-                        <li><a href="?page=corretores">Corretores</a></li>
-                    <?php endif; ?>
-                    <li><a href="?page=anuncios">Anuncios</a></li>
-                    <li><a href="?page=sobre">Clientes</a></li>
+                    <?php if ($_SESSION['tipo'] == 1) { ?>
+                        <li><a href="?page=cadastros">Cadastros</a></li>
+                        <li><a href="?page=anuncios-corretor">Anuncios</a></li>
+                        <li><a href="?page=corretores-adm">Corretores</a></li>
+                    <?php } else { ?>
+                        <li><a href="?page=anuncios">Meus Anuncios</a></li>
+                        <li><a href="?page=criar-anuncios">Criar Anuncio</a></li>
+                    <?php } ?>
                 <?php } else { ?>
                     <li><a href="?page=sobre">Sobre nós</a></li>
                     <li><a href="?page=contato">Contato</a></li>
                     <li><a href="?page=anuncie">Anuncie</a></li>
-                    <li><a href="?page=comprar">Comprar</a></li>
+                    <li><a href="?page=comprar">Comprar </a></li>
                 <?php
                 }
 
