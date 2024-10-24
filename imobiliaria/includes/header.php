@@ -24,7 +24,6 @@ function logoutUser()
     header("Location: login.php");
     exit;
 }
-
 ?>
 
 <header class="main-header">
@@ -47,8 +46,8 @@ function logoutUser()
                         <li><a href="?page=anuncios-corretor">Anuncios</a></li>
                         <li><a href="?page=corretores-adm">Corretores</a></li>
                     <?php } else { ?>
-                        <li><a href="?page=anuncios">Meus Anuncios</a></li>
-                        <li><a href="?page=criar-anuncios">Criar Anuncio</a></li>
+                        <li><a href="?page=corretor">Meus Anúncios</a></li>
+                        <li><a href="?page=criar-anuncio">Criar Anúncio</a></li>
                     <?php } ?>
                 <?php } else { ?>
                     <li><a href="?page=sobre">Sobre nós</a></li>
@@ -57,11 +56,8 @@ function logoutUser()
                     <li><a href="?page=comprar">Comprar </a></li>
                 <?php
                 }
-
                 ?>
-
             </ul>
-
         </nav>
         <?php
         if (!isUserLoggedIn()):
@@ -72,8 +68,13 @@ function logoutUser()
             </a>
         <?php else: ?>
             <div class="logged-in-header-container">
-                <div class="user-name">
-                    Olá, <?php echo $_SESSION['name']; ?>
+                <div class="user-info">
+                    <?php if (!empty($_SESSION['photo'])): ?>
+                        <img src="data:image/jpeg;base64,<?php echo htmlspecialchars($_SESSION['photo']); ?>" alt="Foto do usuário" class="user-photo">
+                    <?php endif; ?>
+                    <div class="user-name">
+                        Olá, <?php echo htmlspecialchars($_SESSION['name']); ?>
+                    </div>
                 </div>
                 <a href="?page=logout" class="client-area-container">
                     <i class="fa-solid fa-right-from-bracket"></i>
@@ -81,8 +82,5 @@ function logoutUser()
                 </a>
             </div>
         <?php endif; ?>
-    </div>
-    <div class="menu-mobile-icon">
-        <i class="fa-solid fa-bars"></i>
     </div>
 </header>
