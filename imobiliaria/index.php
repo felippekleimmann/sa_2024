@@ -24,7 +24,7 @@
 <body>
 
     <?php include_once('includes/header.php'); ?>
-    
+
     <section class="main-container">
         <?php
         $page_default = 'inicial';

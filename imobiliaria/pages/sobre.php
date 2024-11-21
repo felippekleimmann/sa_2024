@@ -3,8 +3,8 @@
         <div class="row">
             <div class="col-md-5 offset-md-1">
                 <div class="info">
-                    <h1 class="title title-1">Somos a Anagê Imóveis - a sua imobiliária em Joinville</h1>
-                    <p class="text text-1">Fundada em 1988, somos hoje a maior imobiliária de Joinville. Com tradição, credibilidade e inovação, oferecemos a mais ampla carteira de imóveis para quem deseja comprar ou alugar.</p>
+                    <h1 class="title title-1">Somos a Nuhaus Imóveis - a sua imobiliária em Joinville</h1>
+                    <p class="text text-1">Fundada em 1988, somos hoje a maior imobiliária de Joinville. Com tradição, credibilidade e inovação, oferecemos a mais ampla carteira de imóveis para quem deseja comprar ou anunciar.</p>
                     <p class="text text-1">Somos uma empresa humana, com canais de atendimento digital, possibilitando ao cliente escolher o melhor caminho para se relacionar. Conquistamos o selo Great Place to Work (GPTW), que nos coloca entre as melhores empresas para se trabalhar, e o ISO 9001, que atesta nosso modelo de gestão de qualidade.</p>
                     <p class="text text-1">Fazemos parte das redes estadual e nacional do setor imobiliário, integrando a Reloca e a ABMI. Tudo para garantir a você a melhor experiência.</p>
                 </div>
@@ -29,7 +29,7 @@
                 </div>
                 <div class="info">
                     <h2 class="title title-2">Política de Qualidade</h2>
-                    <p class="text text-1">A empresa ANAGÊ realiza serviços de locação e venda de imóveis com alta qualidade: <br>➢ Atendendo as expectativas dos clientes; <br>➢ Atendendo os requisitos aplicáveis, legais e normativos; <br>➢ Desenvolvendo os colaboradores; <br>➢ Buscando a melhoria contínua dos processos.</p>
+                    <p class="text text-1">A empresa Nuhaus realiza serviços de locação e venda de imóveis com alta qualidade: <br>➢ Atendendo as expectativas dos clientes; <br>➢ Atendendo os requisitos aplicáveis, legais e normativos; <br>➢ Desenvolvendo os colaboradores; <br>➢ Buscando a melhoria contínua dos processos.</p>
                 </div>
             </div>
         </div>

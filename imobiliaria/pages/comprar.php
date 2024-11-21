@@ -5,7 +5,6 @@
 			<div class="form-row">
                     <div class="col-md-3">
                         <div class="form-group normal-group black-group"><select class="form-control custom-select" id="searchForm-modality" name="statusLabel">
-                                <option value="alugar">Alugar</option>
                                 <option value="comprar">Comprar</option>
                                 <option value="lancamentos">Lançamentos</option>
                             </select></div>

@@ -9,8 +9,8 @@ $con = mysqli_connect("localhost", "root", "", "corretora");
 ob_start();
 
 // Verificar se o corretor está logado
-if (!isset($_SESSION['user_id']) || $_SESSION['tipo'] != 2) {
-    header("Location: login.php");
+if (!isset($_SESSION['user_id'])) {
+    header("Location: ?page=inicial");
     exit;
 }
 

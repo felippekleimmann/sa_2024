@@ -23,7 +23,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     if (isset($_POST['create'])) {
         // Obtenha os dados do formulário
         $username = $_POST['username'];
-        $password = password_hash($_POST['password'], PASSWORD_BCRYPT);
+        $password = $_POST['password'];
         $email = $_POST['email'];
         $cpf = $_POST['cpf'];
         $phone = $_POST['phone'];

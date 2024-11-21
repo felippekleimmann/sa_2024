@@ -21,9 +21,8 @@
                             <div class="form-group"><label for="contactSubject" class="label-control">Assunto</label><input name="subject" type="text" class="form-control" id="contactSubject" placeholder="Informe o assunto" value=""></div>
                             <div class="form-group"><label for="contactSector" class="label-control">Setor</label><select name="department" class="form-control custom-select" id="contactSector">
                                     <option>Selecione</option>
-                                    <option value="Quero alugar um imóvel">Quero alugar um imóvel</option>
+                                    <option value="Quero vender um imóvel">Quero vender um imóvel</option>
                                     <option value="Quero comprar um imóvel">Quero comprar um imóvel</option>
-                                    <option value="Quero deixar meu imóvel para alugar">Quero deixar meu imóvel para alugar</option>
                                     <option value="Ver vagas de trabalho disponíveis">Ver vagas de trabalho disponíveis</option>
                                 </select></div>
                             <div class="form-group"><label for="contactMessage" class="label-control">Mensagem</label><textarea name="message" class="form-control" id="contactMessage" placeholder="Mensagem"></textarea></div>

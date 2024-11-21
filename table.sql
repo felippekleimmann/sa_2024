@@ -48,6 +48,7 @@ CREATE TABLE announcement (
     price DECIMAL(10, 2) NOT NULL,
     build_id INT NOT NULL,
     user_id INT NOT NULL,
+	isHighlighted BOOLEAN NOT NULL,
     FOREIGN KEY (build_id) REFERENCES build(build_id),
     FOREIGN KEY (user_id) REFERENCES user(user_id)
 );
@@ -57,6 +58,23 @@ CREATE TABLE announcement_photos (
     announcement_id INT NOT NULL,
     photo LONGTEXT,
     FOREIGN KEY (announcement_id) REFERENCES announcement(announcement_id)
+);
+
+CREATE TABLE visitor_requests (
+    request_id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    email VARCHAR(100) NOT NULL,
+    message TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE notifications (
+    notification_id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    message TEXT NOT NULL,
+    is_read BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES user(user_id)
 );
 
 -- Inserir dados na tabela state
