@@ -82,34 +82,43 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     }
 
     if (isset($_POST['update'])) {
-        $corretor_id = $_POST['corretor_id'];
-        $username = $_POST['username'];
-        $email = $_POST['email'];
-        $cpf = $_POST['cpf'];
-        $phone = $_POST['phone'];
+		$corretor_id = $_POST['corretor_id'];
+		$username = $_POST['username'];
+		$email = $_POST['email'];
+		$cpf = $_POST['cpf'];
+		$phone = $_POST['phone'];
 
-        $photo = '';
-        if (isset($_FILES['photo'])) {
-            $imageData = file_get_contents($_FILES['photo']['tmp_name']);
-            $photo = base64_encode($imageData);
-        }
+		$photo = '';
+		if (isset($_FILES['photo']) && $_FILES['photo']['error'] == UPLOAD_ERR_OK) {
+			$imageData = file_get_contents($_FILES['photo']['tmp_name']);
+			$photo = base64_encode($imageData);
+		} else {
+			// Manter a foto anterior se nenhuma nova foto for enviada
+			$stmtOldPhoto = $con->prepare("SELECT photo FROM user WHERE user_id = ? AND user_type_id = 2");
+			$stmtOldPhoto->bind_param("i", $corretor_id);
+			$stmtOldPhoto->execute();
+			$stmtOldPhoto->bind_result($currentPhoto);
+			$stmtOldPhoto->fetch();
+			$stmtOldPhoto->close();
+			$photo = $currentPhoto;
+		}
 
-        $stmt = $con->prepare("UPDATE user SET username = ?, email = ?, cpf = ?, phone = ?, photo = ? WHERE user_id = ? AND user_type_id = 2");
+		$stmt = $con->prepare("UPDATE user SET username = ?, email = ?, cpf = ?, phone = ?, photo = ? WHERE user_id = ? AND user_type_id = 2");
 
-        if ($stmt === false) {
-            die('Erro na preparação da declaração SQL: ' . htmlspecialchars($con->error));
-        }
+		if ($stmt === false) {
+			die('Erro na preparação da declaração SQL: ' . htmlspecialchars($con->error));
+		}
 
-        $stmt->bind_param("ssssss", $username, $email, $cpf, $phone, $photo, $corretor_id);
+		$stmt->bind_param("ssssss", $username, $email, $cpf, $phone, $photo, $corretor_id);
 
-        if ($stmt->execute()) {
-            $message = "Corretor atualizado com sucesso!";
-        } else {
-            $message = "Erro ao atualizar corretor: " . htmlspecialchars($stmt->error);
-        }
+		if ($stmt->execute()) {
+			$message = "Corretor atualizado com sucesso!";
+		} else {
+			$message = "Erro ao atualizar corretor: " . htmlspecialchars($stmt->error);
+		}
 
-        $stmt->close();
-    }
+		$stmt->close();
+	}
 }
 
 // Buscar todos os corretores
