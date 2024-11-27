@@ -22,10 +22,10 @@ CREATE TABLE build (
     info_area_total DECIMAL(10, 2) NOT NULL,
     info_parking_space INT NOT NULL,
     info_rooms INT NOT NULL,
-    neighborhood VARCHAR(100) NOT NULL,
+    bairro VARCHAR(255) NOT NULL,
     condominium_price DECIMAL(10, 2),
-    is_condominium BOOLEAN NOT NULL,
     iptu_price DECIMAL(10, 2) NOT NULL,
+    build_type VARCHAR(50) NOT NULL,
     FOREIGN KEY (city_id) REFERENCES city(city_id),
     FOREIGN KEY (state_id) REFERENCES state(state_id)
 );
@@ -63,8 +63,9 @@ CREATE TABLE announcement_photos (
 CREATE TABLE visitor_requests (
     request_id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
-    email VARCHAR(100) NOT NULL,
-    message TEXT NOT NULL,
+    email VARCHAR(100),
+    phone VARCHAR(20),
+    detailed_message TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -74,6 +75,7 @@ CREATE TABLE notifications (
     message TEXT NOT NULL,
     is_read BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    detailed_message TEXT,
     FOREIGN KEY (user_id) REFERENCES user(user_id)
 );
 
@@ -90,11 +92,11 @@ INSERT INTO city (name, state_id) VALUES
 ('Niterói', 2);
 
 -- Inserir dados na tabela build
-INSERT INTO build (address, city_id, state_id, info_area_total, info_parking_space, info_rooms, neighborhood, condominium_price, is_condominium, iptu_price) VALUES
-('Avenida Paulista, 1000', 1, 1, 120.5, 1, 3, 'Bela Vista', 500.00, TRUE, 200.00),
-('Rua das Flores, 200', 2, 1, 150.0, 2, 4, 'Centro', NULL, FALSE, 250.00),
-('Avenida Atlântica, 1500', 3, 2, 90.0, 1, 2, 'Copacabana', 700.00, TRUE, 300.00),
-('Rua das Palmeiras, 300', 4, 2, 110.0, 1, 3, 'Icaraí', 400.00, TRUE, 220.00);
+INSERT INTO build (address, city_id, state_id, info_area_total, info_parking_space, info_rooms, bairro, condominium_price, iptu_price, build_type) VALUES
+('Avenida Paulista, 1000', 1, 1, 120.5, 1, 3, 'Bela Vista', 500.00, 200.00, 'Apartamento'),
+('Rua das Flores, 200', 2, 1, 150.0, 2, 4, 'Centro', NULL, 250.00, 'Casa'),
+('Avenida Atlântica, 1500', 3, 2, 90.0, 1, 2, 'Copacabana', 700.00, 300.00, 'Apartamento'),
+('Rua das Palmeiras, 300', 4, 2, 110.0, 1, 3, 'Icaraí', 400.00, 220.00, 'Apartamento');
 
 -- Inserir dados na tabela user
 INSERT INTO user (username, password, email, cpf, phone, photo, user_type_id) VALUES

@@ -5,13 +5,18 @@ if (!$con) {
     die("Conexão falhou: " . mysqli_connect_error());
 }
 
+if (isset($_SESSION['user_id']) && $_SESSION['user_id']) {
+    header("Location: ?page=criar-imovel");
+    exit;
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-	if (isset($_POST['form_id']) && $_POST['form_id'] === 'visitorRequestForm' && !isUserLoggedIn()) {
+	if (isset($_POST['form_id']) && $_POST['form_id'] === 'visitorRequestForm') {
 		$visitorName = $_POST['visitor_name'];
 		$visitorEmail = $_POST['email'];
 		$visitorMessage = $_POST['buscando'];
 
-		$stmt = $con->prepare("INSERT INTO visitor_requests (name, email, message) VALUES (?, ?, ?)");
+		$stmt = $con->prepare("INSERT INTO visitor_requests (name, email, detailed_message) VALUES (?, ?, ?)");
 		if ($stmt === false) {
 			die('Erro na preparação da declaração SQL: ' . htmlspecialchars($con->error));
 		}
@@ -29,36 +34,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 		$stmt->close();
 	} else {
 		// Inicializar variáveis de filtro
-		$category = $_POST['category'] ?? '';
-		$location = $_POST['location'] ?? '';
-		$code = $_POST['code'] ?? '';
-		$name = $_POST['name'] ?? '';
+		$build_type = isset($_POST['build_type']) ? $_POST['build_type'] : '';
+		$address = isset($_POST['address']) ? $_POST['address'] : '';
+		$min_price = isset($_POST['min_price']) ? $_POST['min_price'] : '';
+		$max_price = isset($_POST['max_price']) ? $_POST['max_price'] : '';
 
-		// Construir a consulta SQL com base nos filtros
-		$query = "SELECT a.announcement_id
+		// Construir a consulta SQL com filtros
+		$sql = "SELECT a.announcement_id
 				FROM announcement a
 				JOIN build b ON a.build_id = b.build_id
-				LEFT JOIN announcement_photos ap ON a.announcement_id = ap.announcement_id
-				WHERE 1=1"; // Adiciona uma condição sempre verdadeira para facilitar a concatenação das outras condições
+				WHERE 1=1";
 
-		if (!empty($category)) {
-			$query .= " AND b.build_type = '$category'";
+		if ($build_type !== '') {
+			$sql .= " AND b.build_type = '" . mysqli_real_escape_string($con, $build_type) . "'";
 		}
 
-		if (!empty($location)) {
-			$query .= " AND (b.address LIKE '%$location%' OR b.neighborhood LIKE '%$location%')";
+		if ($address !== '') {
+			$sql .= " AND b.address LIKE '%" . mysqli_real_escape_string($con, $address) . "%'";
 		}
 
-		if (!empty($code)) {
-			$query .= " AND a.announcement_id = '$code'";
+		if ($min_price !== '') {
+			$sql .= " AND a.price >= " . mysqli_real_escape_string($con, $min_price);
 		}
 
-		if (!empty($name)) {
-			$query .= " AND a.title LIKE '%$name%'";
+		if ($max_price !== '') {
+			$sql .= " AND a.price <= " . mysqli_real_escape_string($con, $max_price);
 		}
-
-		var_dump($query);
-		$result = $con->query($query);
+		// var_dump($max_price);
+		// var_dump($sql);
+		// die();
+		$result = $con->query($sql);
 		$announcements = [];
 
 		if ($result === false) {
@@ -88,7 +93,7 @@ function createNotifications($name, $email, $message) {
 
     while ($row = $result->fetch_assoc()) {
         $userId = $row['user_id'];
-        $notificationMessage = "Nova solicitação de $name ($email): $message";
+        $notificationMessage = "Nova solicitação pelo formulário da PÁGINA INICIAL COM INTUITO DE $message: $name - ($email)";
 
         $notificationStmt = $con->prepare("INSERT INTO notifications (user_id, message) VALUES (?, ?)");
         $notificationStmt->bind_param("is", $userId, $notificationMessage);
@@ -99,7 +104,7 @@ function createNotifications($name, $email, $message) {
     $stmt->close();
 }
 
-$query = "SELECT a.announcement_id, a.title, a.description, a.price, b.address, b.info_rooms, b.info_area_total, b.info_parking_space, b.neighborhood, ap.photo
+$query = "SELECT a.announcement_id, a.title, a.description, a.price, b.address, b.info_rooms, b.info_area_total, b.info_parking_space, b.bairro, ap.photo
           FROM announcement a
           JOIN build b ON a.build_id = b.build_id
           LEFT JOIN announcement_photos ap ON a.announcement_id = ap.announcement_id  WHERE a.isHighlighted = TRUE;";
@@ -116,53 +121,97 @@ if ($result->num_rows > 0) {
 }
 
 ?>
+<head>
+	<style>
+		.block-search .form-inline .form-row {
+			display: flex;
+			flex-wrap: wrap;
+			justify-content: space-between;
+		}
 
+		.block-search .form-inline .form-group {
+			margin-bottom: 15px;
+		}
+
+		.block-search .form-inline .form-group label {
+			display: block;
+			margin-bottom: 5px;
+			font-weight: bold;
+		}
+
+		.block-search .form-inline .form-control {
+			width: 100%;
+			padding: 10px;
+			border-radius: 5px;
+			border: 1px solid #ccc;
+		}
+
+		.block-search .form-inline .btn-1 {
+			width: 100%;
+			padding: 10px;
+			background-color: #ffc107;
+			border: none;
+			border-radius: 5px;
+			color: white;
+			font-weight: bold;
+			cursor: pointer;
+		}
+
+		.block-search .form-inline .btn-1:hover {
+			background-color: #e0a800;
+		}
+	</style>
+</head>
 <div class="jss11">
 	<div class="banner-section" style="background-image: url('assets/images/anage-inicial.webp');">
         <div class="container">
             <div class="block-centered">
                 <h1 class="title title-1"><span>Nuhaus Imóveis:</span> a sua imobiliária em Joinville</h1>
-                <div class="block-search">
+                <div class="block-search" style="max-width: 1000px">
                     <div class="blur"></div>
                     <div class="filters-section position-relative">
                         <div class="block-filters position-static">
-<form method="post">
-    <div class="form-row">
-        <div class="col-md-4">
-            <div class="form-group"><label for="code" class="label-control">Código do imóvel</label><input type="text" class="form-control" name="code"></div>
-        </div>
-        <div class="col-md-4">
-            <div class="form-group"><label for="name" class="label-control">Nome do empreendimento</label><input type="text" class="form-control" name="name"></div>
-        </div>
-        <div class="col-md-4">
-            <div class="form-group"><label for="searchForm-category" class="label-control">Tipo do Imóvel</label><select class="form-control custom-select" id="searchForm-category" name="category">
-                <option value="">Selecione o tipo</option>
-                <option value="22">Condomínio</option>
-                <option value="3">Casa Comercial</option>
-                <option value="61495c47e41c1635">Casa Residencial</option>
-                <option value="1">Cobertura</option>
-                <option value="23">Comercial</option>
-                <option value="66759947f38d44232">Conjunto Comercial</option>
-                <option value="14">Galpão</option>
-                <option value="19">Garagem</option>
-                <option value="17">Loja</option>
-                <option value="9">Sala</option>
-                <option value="8">Terreno</option>
-            </select></div>
-        </div>
-        <div class="col-md-4">
-            <div class="form-group"><label for="location" class="label-control">Localização</label><input type="text" class="form-control" name="location"></div>
-        </div>
-        <div class="col-md-4">
-            <div class="block-submit"><button type="submit" class="btn btn-1">Buscar meu Imóvel</button></div>
-        </div>
-    </div>
-	<?php if (!empty($message_error)): ?>
-        <div class="alert alert-danger" style="margin-top: 10px;">
-			<?php echo $message_error; ?>
-        </div>
-		<?php endif; ?>
-	</form>
+						<form method="post" class="form-inline">
+						<div class="form-row">
+							<div class="form-group col-md-5">
+								<label for="build_type">Tipo do Imóvel</label>
+								<select name="build_type" id="build_type" class="form-control">
+									<option value="">Selecione o tipo</option>
+									<option value="Apartamento">Apartamento</option>
+									<option value="Casa">Casa/Sobrado</option>
+									<option value="Chácara/Sítio">Chácara/Sítio</option>
+									<option value="Comercial">Comercial</option>
+									<option value="Terreno">Terreno</option>
+								</select>
+							</div>
+
+							<div class="form-group col-md-3">
+								<label for="address">Localização</label>
+								<input type="text" name="address" id="address" class="form-control" placeholder="Digite o endereço">
+							</div>
+
+							<div class="form-group col-md-2">
+								<label for="min_price">Preço Mínimo</label>
+								<input type="number" name="min_price" id="min_price" class="form-control" step="0.01">
+							</div>
+
+							<div class="form-group col-md-2">
+								<label for="max_price">Preço Máximo</label>
+								<input type="number" name="max_price" id="max_price" class="form-control" step="0.01">
+							</div>
+
+							<!-- <div class="form-row d-flex justify-content-center"> -->
+							<div class="form-group col-12 text-center">
+                        <button type="submit" class="btn btn-1 btn-lg">Buscar meu Imóvel</button>
+                    <!-- </div> -->
+                </div>
+						</div>
+					<?php if (!empty($message_error)): ?>
+						<div class="alert alert-danger" style="margin-top: 10px; margin-left: 25%">
+							<?php echo $message_error; ?>
+						</div>
+						<?php endif; ?>
+					</form>
                         </div>
                     </div>
                 </div>
@@ -191,7 +240,7 @@ if ($result->num_rows > 0) {
                                                         <div class="swiper-container swiper-container-virtual swiper-container-initialized swiper-container-horizontal swiper-container-pointer-events">
                                                             <div class="swiper-wrapper" id="swiper-wrapper-1d68cf6563545868" aria-live="polite" style="transform: translate3d(0px, 0px, 0px);">
                                                                 <div class="swiper-slide swiper-slide-active" data-swiper-slide-index="0" style="left: 0px; width: 358px;">
-																<div class="image" style="background-image: url('data:image/jpeg;base64,<?php echo $announcement['photo']; ?>');"></div><span class="count">1/30</span>
+																<div class="image" style="background-image: url('<?php echo !empty($announcement['photo']) && strlen($announcement['photo']) > 100 ? 'data:image/jpeg;base64,' .$announcement['photo'] . '' : 'assets/images/image-placeholder.png'; ?>');"></div>
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -204,7 +253,7 @@ if ($result->num_rows > 0) {
                                                         <p class="card-text">Quartos: <?php echo htmlspecialchars($announcement['info_rooms']); ?></p>
                                                         <p class="card-text">Área: <?php echo htmlspecialchars($announcement['info_area_total']); ?> m²</p>
                                                         <p class="card-text">Vagas de garagem: <?php echo htmlspecialchars($announcement['info_parking_space']); ?></p>
-                                                        <p class="card-text">Bairro: <?php echo htmlspecialchars($announcement['neighborhood']); ?></p>
+                                                        <p class="card-text">Bairro: <?php echo htmlspecialchars($announcement['bairro']); ?></p>
                                                     </div>
                                                 </a>
                                             </div>
@@ -288,7 +337,11 @@ if ($result->num_rows > 0) {
                 </div>
                 <div class="form-row">
                     <div class="col-12">
-                        <div class="custom-control custom-checkbox small-checkbox"><input type="checkbox" class="custom-control-input" name="acceptPolicy"><label class="custom-control-label">Ao preencher este formulário concordo com a coleta e tratamento dos meus dados, conforme <a target="_blank" href="/PolticadePrivacidadeAnage.pdf">Política de Privacidade</a>, nos termos da Lei 13.709/2018, permitindo desde já eventual armazenamento destes dados e o contato comercial da Nuhaus Imóveis</label></div>
+					<div class="custom-control custom-checkbox small-checkbox">
+						<input type="checkbox" class="custom-control-input" id="acceptPolicy" name="acceptPolicy" required>
+						<label class="custom-control-label" for="acceptPolicy">
+							Ao preencher este formulário concordo com a coleta e tratamento dos meus dados, conforme <a target="_blank" href="/PolticadePrivacidadeAnage.pdf">Política de Privacidade</a>, nos termos da Lei 13.709/2018, permitindo desde já eventual armazenamento destes dados e o contato comercial da Nuhaus Imóveis
+						</label>
                     </div>
                 </div>
             </form>

@@ -6,14 +6,8 @@ if (!$con) {
     die("Connection failed: " . mysqli_connect_error());
 }
 
-// Verificar se há logout
-if (!empty($_GET)) {
-    if (isset($_GET['logout']) && $_GET['logout'] == 'true') {
-        logoutUser();
-    }
-}
-
 $message_error = '';
+$message_success = '';
 
 // Verificar se há dados de POST
 if (!empty($_POST)) {
@@ -31,11 +25,11 @@ if (!empty($_POST)) {
         $userInfos = $result->fetch_object();
 
         // Verificar se a senha fornecida coincide com a senha criptografada
-		// var_dump($userInfos->password);
-        // if (password_verify($password, $userInfos->password)) {
-        if ($password ===  $userInfos->password) {
+        if ($password === $userInfos->password) {
             // Iniciar sessão e armazenar informações do usuário
-            session_start();
+            if (session_status() == PHP_SESSION_NONE) {
+                session_start();
+            }
             $_SESSION['session_id'] = session_id();
             $_SESSION['user_id'] = $userInfos->user_id;
             $_SESSION['name'] = $userInfos->username;
@@ -43,11 +37,13 @@ if (!empty($_POST)) {
             $_SESSION['photo'] = $userInfos->photo;
 
             // Redirecionar com base no tipo de usuário
-            if ($userInfos->user_type_id == 1) {
-                header("Location: ?page=admin-page");
-            } else if ($userInfos->user_type_id == 2) {
-                header("Location: ?page=corretor");
-            }
+            $message_success = 'Login realizado com sucesso!';
+
+			if ($_SESSION['tipo'] == 1) {
+				header("Refresh: 2; url=?page=admin_corretores");
+			} else {
+				header("Refresh: 2; url=?page=corretor");
+			}
         } else {
             $message_error = 'Usuário ou senha incorretos.';
         }
@@ -56,27 +52,36 @@ if (!empty($_POST)) {
     }
 }
 ?>
+
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
     <title>Área do Corretor</title>
     <style>
-        body, html {
+        .mainContainer {
+			margin-top: 300px;
             height: 100%;
-            margin: 0;
-			overflow: hidden;
-        }
-
-        .background {
-			background-image: url('assets/images/topo-fale-conosco.webp');
-            background-position: center;
-            background-repeat: no-repeat;
-            background-size: cover;
-            height: 100%;
+            /* margin: 0; */
+            font-family: Arial, sans-serif;
             display: flex;
             justify-content: center;
             align-items: center;
+            /* background-color: #f9f9f9; */
+        }
+
+        .background {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('assets/images/topo-fale-conosco.webp');
+            background-position: center;
+            background-repeat: no-repeat;
+            background-size: cover;
+            filter: blur(8px);
+            z-index: -1;
         }
 
         .login-container {
@@ -87,6 +92,8 @@ if (!empty($_POST)) {
             max-width: 400px;
             width: 100%;
             text-align: center;
+            position: relative;
+            z-index: 1;
         }
 
         .login-title {
@@ -117,70 +124,68 @@ if (!empty($_POST)) {
         .btn {
             width: 100%;
             padding: 10px;
-            background-color: #007bff;
+            background-color: #ffc107;
             color: #ffffff;
             border: none;
             border-radius: 5px;
-            cursor: pointer;
             font-size: 16px;
-            transition: background-color 0.3s;
+            cursor: pointer;
         }
 
         .btn:hover {
-            background-color: #0056b3;
+            background-color: #e0a800;
+        }
+
+        .message-error, .message-success {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 5px;
+            text-align: center;
+            font-size: 14px;
         }
 
         .message-error {
-            margin-top: 15px;
-            padding: 10px;
             background-color: #ffdddd;
             color: #d8000c;
             border: 1px solid #d8000c;
-            border-radius: 5px;
-            text-align: center;
+        }
+
+        .message-success {
+            background-color: #ddffdd;
+            color: #008000;
+            border: 1px solid #008000;
         }
     </style>
 </head>
 <body>
-<div class="contact-section">
-    <div class="page-header large" style="background-image: url('assets/images/topo-fale-conosco.webp');">
-        <div class="description">
-            <div class="container">
-                <div class="row">
-                    <div class="col-md-5 offset-md-1">
+	<div class="mainContainer">
+		<div class="background"></div>
+			<div class="login-container">
+				<h2 class="login-title">Login</h2>
+				<form action="" method="post">
+					<div class="form-group">
+						<label for="cpf">CPF</label>
+						<input name="cpf" type="text" class="form-control" id="cpf" placeholder="Digite seu CPF" value="">
+					</div>
+					<div class="form-group">
+						<label for="password">Senha</label>
+						<input name="password" type="password" class="form-control" id="password" placeholder="Digite sua senha" value="">
+					</div>
+					<button type="submit" class="btn">Entrar</button>
+				</form>
 
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="content">
-        <div class="form-content">
-            <div class="container">
-                <div class="row">
-                    <div class="col-md-6 offset-3">
-                        <h2 class="title title-2">Login</h2>
-                        <form action="#" class="form" id="form-anage-contato" method="post">
-                            <div class="form-group">
-                                <label for="contactName" class="label-control">CPF</label>
-                                <input name="cpf" type="text" class="form-control" id="contactName" placeholder="Digite seu CPF" value="">
-                            </div>
-                            <div class="form-group">
-                                <label for="contactSubject" class="label-control">Senha</label>
-                                <input name="password" type="password" class="form-control" id="contactSubject" placeholder="Digite sua senha" value="">
-                            </div>
-                            <button type="submit" name="button" class="btn btn-1">Entrar</button>
-                        </form>
+				<?php if ($message_error != ''): ?>
+					<div class="message-error">
+						<?php echo $message_error; ?>
+					</div>
+				<?php endif; ?>
 
-                        <?php if ($message_error != ''): ?>
-                            <div class="message-error">
-                                <?php echo $message_error; ?>
-                            </div>
-                        <?php endif; ?>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+				<?php if ($message_success != ''): ?>
+					<div class="message-success">
+						<?php echo $message_success; ?>
+					</div>
+				<?php endif; ?>
+			</div>
+	</div>
 </body>
 </html>

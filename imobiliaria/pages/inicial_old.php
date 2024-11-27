@@ -15,7 +15,7 @@
                     <div class="image" style="background-image: url(https://images.anageimoveis.com.br/vista.imobi/fotos/27959/i8955BLLt192xYuKXYC5H_2795966e3fb1f77281.jpg);"></div>
                     <div class="infos-container">
                         <div class="type">Apartamento padrão</div>
-                        <div class="neighborhood">Guanabara - Joinville</div>
+                        <div class="bairro">Guanabara - Joinville</div>
                         <div class="price">R$ 250.000,00</div>
                         <div class="icons-info">
                             <ul>

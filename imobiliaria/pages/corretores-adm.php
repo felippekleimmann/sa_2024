@@ -120,7 +120,7 @@ $corretores = $con->query("SELECT * FROM user WHERE user_type_id = 2");
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Gerenciamento de Corretores</title>
+    <title>Criar corretores</title>
     <link rel="stylesheet" type="text/css" href="../assets/css/style.css">
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
 	<style>
@@ -149,8 +149,6 @@ $corretores = $con->query("SELECT * FROM user WHERE user_type_id = 2");
 <body>
     <div class="content">
         <div class="container">
-            <h2>Gerenciamento de Corretores</h2>
-
             <?php if ($message): ?>
                 <div class="alert"><?php echo $message; ?></div>
             <?php endif; ?>

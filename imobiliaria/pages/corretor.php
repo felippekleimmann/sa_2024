@@ -4,6 +4,11 @@ if (session_status() == PHP_SESSION_NONE) {
     session_start();
 }
 
+if (!isset($_SESSION['user_id']) || $_SESSION['tipo'] != 2) {
+    header("Location: ?page=area-do-corretor");
+    exit;
+}
+
 $con = mysqli_connect("localhost", "root", "", "corretora");
 
 if (!$con) {
@@ -31,11 +36,24 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             }
         }
 
-        // Convertendo o array de fotos para string
-        $photosString = implode(',', $photos);
-
         // Fotos removidas
         $removedPhotos = isset($_POST['removed_photos']) ? explode(',', $_POST['removed_photos']) : [];
+
+        // Fotos existentes
+        $existingPhotos = [];
+        $photoResult = $con->query("SELECT photo FROM announcement_photos WHERE announcement_id = $announcement_id");
+        while ($photoRow = $photoResult->fetch_assoc()) {
+            $existingPhotos[] = $photoRow['photo'];
+        }
+
+        // Remover fotos existentes com base nos índices fornecidos
+        foreach ($removedPhotos as $index) {
+            unset($existingPhotos[$index]);
+        }
+
+        // Concatenar fotos existentes com novas fotos
+        $allPhotos = array_merge($existingPhotos, $photos);
+        $photosString = implode(',', $allPhotos);
 
         updateAnnouncement($con, $announcement_id, $title, $description, $price, $build_id, $photosString, $removedPhotos);
     }
@@ -106,7 +124,6 @@ while ($photoRow = $photoResult->fetch_assoc()) {
     </style>
 </head>
 <body>
-    <!-- <?php include '../includes/header.php'; ?> -->
     <div class="content">
         <div class="container">
             <h2>Meus Anúncios</h2>
@@ -178,16 +195,16 @@ while ($photoRow = $photoResult->fetch_assoc()) {
                         <?php foreach ($allPhotos as $announcement_id => $photos): ?>
                             <div id="photos_<?php echo $announcement_id; ?>" class="hidden">
                                 <?php foreach ($photos as $index => $photo): ?>
-                                    <div class="image-preview" data-index="<?php echo $index; ?>">
+                                    <div class="image-preview" data-announcement-id="<?php echo $announcement_id; ?>" data-index="<?php echo $index; ?>">
                                         <img src="data:image/jpeg;base64,<?php echo $photo; ?>">
-                                        <button type="button" class="delete-btn" onclick="removeExistingPhoto(<?php echo $announcement_id; ?>, <?php echo $index; ?>)">X</button>
+                                        <button type="button" class="delete-btn" onclick="removeExistingPhoto(this, <?php echo $index; ?>)">X</button>
                                     </div>
                                 <?php endforeach; ?>
                             </div>
                         <?php endforeach; ?>
                     </div>
                     <div class="form-group">
-                        <label for="photos">Fotos</label>
+					<label for="photos">Novas Fotos</label>
                         <input type="file" name="photos[]" id="photos" class="form-control" accept="image/*" multiple>
                         <div id="new_photos_preview"></div>
                     </div>
@@ -206,69 +223,70 @@ while ($photoRow = $photoResult->fetch_assoc()) {
             const priceInput = document.getElementById('price');
             const buildIdSelect = document.getElementById('build_id');
             const announcementIdInput = document.getElementById('announcement_id');
-			const removedPhotosInput = document.getElementById('removed_photos');
+            const removedPhotosInput = document.getElementById('removed_photos');
             const photosInput = document.getElementById('photos');
             const newPhotosPreview = document.getElementById('new_photos_preview');
-            let removedPhotos = [];
+            const existingPhotosContainer = document.getElementById('existing_photos');
 
+            // Atualizar o formulário de edição quando um anúncio for selecionado
             announcementSelector.addEventListener('change', function () {
-                if (this.value) {
-                    const selectedOption = this.options[this.selectedIndex];
+                const selectedOption = announcementSelector.options[announcementSelector.selectedIndex];
+                if (selectedOption.value) {
+                    editForm.classList.remove('hidden');
                     titleInput.value = selectedOption.getAttribute('data-title');
                     descriptionTextarea.value = selectedOption.getAttribute('data-description');
                     priceInput.value = selectedOption.getAttribute('data-price');
                     buildIdSelect.value = selectedOption.getAttribute('data-build_id');
-                    announcementIdInput.value = this.value;
-                    editForm.classList.remove('hidden');
+                    announcementIdInput.value = selectedOption.value;
 
-                    // Mostrar fotos correspondentes ao anúncio selecionado
-                    document.querySelectorAll('[id^="photos_"]').forEach(div => div.classList.add('hidden'));
-                    document.getElementById('photos_' + this.value).classList.remove('hidden');
+                    // Mostrar fotos existentes
+                    existingPhotosContainer.innerHTML = '';
+                    const existingPhotos = document.getElementById('photos_' + selectedOption.value);
+                    if (existingPhotos) {
+                        existingPhotosContainer.innerHTML = existingPhotos.innerHTML;
+                    }
                 } else {
                     editForm.classList.add('hidden');
-                    document.querySelectorAll('[id^="photos_"]').forEach(div => div.classList.add('hidden'));
                 }
             });
 
+            // Pré-visualizar novas fotos selecionadas
             photosInput.addEventListener('change', function () {
                 newPhotosPreview.innerHTML = '';
-                Array.from(this.files).forEach((file, index) => {
+                Array.from(photosInput.files).forEach(file => {
                     const reader = new FileReader();
                     reader.onload = function (e) {
-                        const imgDiv = document.createElement('div');
-                        imgDiv.className = 'image-preview';
-                        imgDiv.innerHTML = `
-                            <img src="${e.target.result}" />
-                            <button type="button" class="delete-btn" onclick="removeNewPhoto(${index})">X</button>
-                        `;
-                        newPhotosPreview.appendChild(imgDiv);
+                        const preview = document.createElement('div');
+                        preview.classList.add('image-preview');
+                        preview.innerHTML = `<img src="${e.target.result}" /><button type="button" class="delete-btn" onclick="removeNewPhoto(this)">X</button>`;
+                        newPhotosPreview.appendChild(preview);
                     };
                     reader.readAsDataURL(file);
                 });
             });
 
-            window.removeExistingPhoto = function(announcementId, index) {
-                const photoDiv = document.querySelector(`#photos_${announcementId} .image-preview[data-index="${index}"]`);
-                if (photoDiv) {
-                    photoDiv.remove();
-                    removedPhotos.push(index);
-                    removedPhotosInput.value = removedPhotos.join(',');
-                }
+            // Remover foto existente
+            window.removeExistingPhoto = function (button, index) {
+                const photoPreview = button.parentElement;
+                photoPreview.remove();
+                const announcementId = photoPreview.getAttribute('data-announcement-id');
+                const removedPhotos = removedPhotosInput.value ? removedPhotosInput.value.split(',') : [];
+                removedPhotos.push(index);
+                removedPhotosInput.value = removedPhotos.join(',');
             };
 
-            window.removeNewPhoto = function(index) {
-                const photoDiv = document.querySelector(`#new_photos_preview .image-preview:nth-child(${index + 1})`);
-                if (photoDiv) {
-                    photoDiv.remove();
-                    // Remove the file from the input
-                    const dt = new DataTransfer();
-                    Array.from(photosInput.files).forEach((file, i) => {
-                        if (i !== index) {
-                            dt.items.add(file);
-                        }
-                    });
-                    photosInput.files = dt.files;
-                }
+            // Remover nova foto
+            window.removeNewPhoto = function (button) {
+                const preview = button.parentElement;
+                const fileIndex = Array.from(newPhotosPreview.children).indexOf(preview);
+                preview.remove();
+                const dataTransfer = new DataTransfer();
+                Array.from(photosInput.files).forEach((file, index) => {
+                    if (index !== fileIndex) {
+                        dataTransfer.items.add(file);
+                    }
+                });
+                photosInput.files = dataTransfer.files;
             };
         });
     </script>

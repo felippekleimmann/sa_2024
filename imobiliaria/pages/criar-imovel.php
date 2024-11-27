@@ -4,14 +4,13 @@ if (session_status() == PHP_SESSION_NONE) {
     session_start();
 }
 
-// Conectar ao banco de dados
 $con = mysqli_connect("localhost", "root", "", "corretora");
 
 if (!$con) {
     die("Conexão falhou: " . mysqli_connect_error());
 }
 
-if (!isset($_SESSION['user_id']) || $_SESSION['tipo'] != 1 && $_SESSION['tipo'] != 2) {
+if (!isset($_SESSION['user_id']) || ($_SESSION['tipo'] != 1 && $_SESSION['tipo'] != 2)) {
     header("Location: login.php");
     exit;
 }
@@ -27,37 +26,67 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $info_area_total = $_POST['info_area_total'];
         $info_parking_space = $_POST['info_parking_space'];
         $info_rooms = $_POST['info_rooms'];
-        $neighborhood = $_POST['neighborhood'];
+        $bairro = $_POST['bairro'];
         $condominium_price = $_POST['condominium_price'];
-        $is_condominium = $_POST['is_condominium'];
+        $build_type = $_POST['build_type'];
         $iptu_price = $_POST['iptu_price'];
 
-        $stmt = $con->prepare("INSERT INTO build (address, city_id, state_id, info_area_total, info_parking_space, info_rooms, neighborhood, condominium_price, is_condominium, iptu_price) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-        $stmt->bind_param("siiddiisdi", $address, $city_id, $state_id, $info_area_total, $info_parking_space, $info_rooms, $neighborhood, $condominium_price, $is_condominium, $iptu_price);
-
-        if ($stmt->execute()) {
-            $message = "Imóvel criado com sucesso!";
+        $stmt = $con->prepare("INSERT INTO build (address, city_id, state_id, info_area_total, info_parking_space, info_rooms, bairro, condominium_price, iptu_price, build_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        if ($stmt === false) {
+            $message = "Erro na preparação da declaração SQL: " . htmlspecialchars($con->error);
         } else {
-            $message = "Erro ao criar imóvel: " . htmlspecialchars($stmt->error);
-        }
+            $stmt->bind_param("siiddiisds", $address, $city_id, $state_id, $info_area_total, $info_parking_space, $info_rooms, $bairro, $condominium_price, $iptu_price, $build_type);
 
-        $stmt->close();
+            if ($stmt->execute()) {
+                $message = "Imóvel criado com sucesso!";
+            } else {
+                $message = "Erro ao criar imóvel: " . htmlspecialchars($stmt->error);
+            }
+
+            $stmt->close();
+        }
     }
 
     // Processar remoção de imóvel
     if (isset($_POST['delete'])) {
-        $build_id = $_POST['build_id'];
-        $stmt = $con->prepare("DELETE FROM build WHERE build_id = ?");
-        $stmt->bind_param("i", $build_id);
+		$build_id = $_POST['build_id'];
 
-        if ($stmt->execute()) {
-            $message = "Imóvel removido com sucesso!";
-        } else {
-            $message = "Erro ao remover imóvel: " . htmlspecialchars($stmt->error);
-        }
-
-        $stmt->close();
-    }
+		// Primeiro deletar as fotos dos anúncios que referenciam este imóvel
+		$stmt = $con->prepare("DELETE FROM announcement_photos WHERE announcement_id IN (SELECT announcement_id FROM announcement WHERE build_id = ?)");
+		if ($stmt === false) {
+			$message = "Erro na preparação da declaração SQL para deletar fotos dos anúncios: " . htmlspecialchars($con->error);
+		} else {
+			$stmt->bind_param("i", $build_id);
+			if ($stmt->execute()) {
+				// Agora deletar os anúncios que referenciam este imóvel
+				$stmt = $con->prepare("DELETE FROM announcement WHERE build_id = ?");
+				if ($stmt === false) {
+					$message = "Erro na preparação da declaração SQL para deletar anúncios: " . htmlspecialchars($con->error);
+				} else {
+					$stmt->bind_param("i", $build_id);
+					if ($stmt->execute()) {
+						// Agora deletar o imóvel
+						$stmt = $con->prepare("DELETE FROM build WHERE build_id = ?");
+						if ($stmt === false) {
+							$message = "Erro na preparação da declaração SQL para deletar imóvel: " . htmlspecialchars($con->error);
+						} else {
+							$stmt->bind_param("i", $build_id);
+							if ($stmt->execute()) {
+								$message = "Imóvel removido com sucesso!";
+							} else {
+								$message = "Erro ao remover imóvel: " . htmlspecialchars($stmt->error);
+							}
+						}
+					} else {
+						$message = "Erro ao remover anúncios: " . htmlspecialchars($stmt->error);
+					}
+				}
+			} else {
+				$message = "Erro ao remover fotos dos anúncios: " . htmlspecialchars($stmt->error);
+			}
+		}
+		$stmt->close();
+	}
 
     // Processar atualização de imóvel
     if (isset($_POST['update'])) {
@@ -68,21 +97,25 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $info_area_total = $_POST['info_area_total'];
         $info_parking_space = $_POST['info_parking_space'];
         $info_rooms = $_POST['info_rooms'];
-        $neighborhood = $_POST['neighborhood'];
+        $bairro = $_POST['bairro'];
         $condominium_price = $_POST['condominium_price'];
-        $is_condominium = $_POST['is_condominium'];
+        $build_type = $_POST['build_type'];
         $iptu_price = $_POST['iptu_price'];
 
-        $stmt = $con->prepare("UPDATE build SET address = ?, city_id = ?, state_id = ?, info_area_total = ?, info_parking_space = ?, info_rooms = ?, neighborhood = ?, condominium_price = ?, is_condominium = ?, iptu_price = ? WHERE build_id = ?");
-        $stmt->bind_param("siiddiisdii", $address, $city_id, $state_id, $info_area_total, $info_parking_space, $info_rooms, $neighborhood, $condominium_price, $is_condominium, $iptu_price, $build_id);
-
-        if ($stmt->execute()) {
-            $message = "Imóvel atualizado com sucesso!";
+        $stmt = $con->prepare("UPDATE build SET address = ?, city_id = ?, state_id = ?, info_area_total = ?, info_parking_space = ?, info_rooms = ?, bairro = ?, condominium_price = ?, build_type = ?, iptu_price = ? WHERE build_id = ?");
+        if ($stmt === false) {
+            $message = "Erro na preparação da declaração SQL: " . htmlspecialchars($con->error);
         } else {
-            $message = "Erro ao atualizar imóvel: " . htmlspecialchars($stmt->error);
-        }
+            $stmt->bind_param("siiddiisdsi", $address, $city_id, $state_id, $info_area_total, $info_parking_space, $info_rooms, $bairro, $condominium_price, $iptu_price, $build_type, $build_id);
 
-        $stmt->close();
+            if ($stmt->execute()) {
+                $message = "Imóvel atualizado com sucesso!";
+            } else {
+                $message = "Erro ao atualizar imóvel: " . htmlspecialchars($stmt->error);
+            }
+
+            $stmt->close();
+        }
     }
 }
 
@@ -185,18 +218,22 @@ $states = getStates($con);
                             <input type="number" name="info_rooms" id="info_rooms" class="form-control" required>
                         </div>
                         <div class="form-group">
-                            <label for="neighborhood">Bairro</label>
-                            <input type="text" name="neighborhood" id="neighborhood" class="form-control" required>
+                            <label for="bairro">Bairro</label>
+                            <input type="text" name="bairro" id="bairro" class="form-control" required>
                         </div>
                         <div class="form-group">
                             <label for="condominium_price">Preço do Condomínio</label>
                             <input type="number" name="condominium_price" id="condominium_price" class="form-control" step="0.01">
                         </div>
                         <div class="form-group">
-                            <label for="is_condominium">É Condomínio?</label>
-                            <select name="is_condominium" id="is_condominium" class="form-control" required>
-                                <option value="1">Sim</option>
-                                <option value="0">Não</option>
+                            <label for="build_type">Tipo do imóvel</label>
+                            <select name="build_type" id="build_type" class="form-control" required>
+								<option value="">Selecione o tipo</option>
+								<option value="Apartamento">Apartamento</option>
+								<option value="Casa">Casa/Sobrado</option>
+								<option value="Chácara/Sítio">Chácara/Sítio</option>
+								<option value="Comercial">Comercial</option>
+								<option value="Terreno">Terreno</option>
                             </select>
                         </div>
                         <div class="form-group">
@@ -216,16 +253,16 @@ $states = getStates($con);
                                 <option value="">Selecione um imóvel</option>
                                 <?php while ($row = $builds->fetch_assoc()): ?>
                                     <option value="<?php echo $row['build_id']; ?>"
-                                            data-address="<?php echo htmlspecialchars($row['address']); ?>"
-                                            data-city-id="<?php echo $row['city_id']; ?>"
-                                            data-state-id="<?php echo $row['state_id']; ?>"
-                                            data-info-area-total="<?php echo $row['info_area_total']; ?>"
-                                            data-info-parking-space="<?php echo $row['info_parking_space']; ?>"
-                                            data-info-rooms="<?php echo $row['info_rooms']; ?>"
-                                            data-neighborhood="<?php echo htmlspecialchars($row['neighborhood']); ?>"
-                                            data-condominium-price="<?php echo $row['condominium_price']; ?>"
-                                            data-is-condominium="<?php echo $row['is_condominium']; ?>"
-                                            data-iptu-price="<?php echo $row['iptu_price']; ?>">
+									data-address="<?php echo htmlspecialchars($row['address']); ?>"
+									data-city-id="<?php echo $row['city_id']; ?>"
+									data-state-id="<?php echo $row['state_id']; ?>"
+									data-info-area-total="<?php echo $row['info_area_total']; ?>"
+									data-info-parking-space="<?php echo $row['info_parking_space']; ?>"
+									data-info-rooms="<?php echo $row['info_rooms']; ?>"
+									data-bairro="<?php echo htmlspecialchars($row['bairro']); ?>"
+									data-condominium-price="<?php echo $row['condominium_price']; ?>"
+									data-iptu-price="<?php echo $row['iptu_price']; ?>"
+									data-build-type="<?php echo $row['build_type']; ?>">
                                         <?php echo htmlspecialchars($row['address']); ?>
                                     </option>
                                 <?php endwhile; ?>
@@ -271,20 +308,24 @@ $states = getStates($con);
                                 <input type="number" name="info_rooms" id="update_info_rooms" class="form-control" required>
                             </div>
                             <div class="form-group">
-                                <label for="neighborhood">Bairro</label>
-                                <input type="text" name="neighborhood" id="update_neighborhood" class="form-control" required>
+                                <label for="bairro">Bairro</label>
+                                <input type="text" name="bairro" id="update_bairro" class="form-control" required>
                             </div>
                             <div class="form-group">
                                 <label for="condominium_price">Preço do Condomínio</label>
                                 <input type="number" name="condominium_price" id="update_condominium_price" class="form-control" step="0.01">
                             </div>
                             <div class="form-group">
-                                <label for="is_condominium">É Condomínio?</label>
-                                <select name="is_condominium" id="update_is_condominium" class="form-control" required>
-                                    <option value="1">Sim</option>
-                                    <option value="0">Não</option>
-                                </select>
-                            </div>
+                            <label for="build_type">Tipo do imóvel</label>
+                            <select name="build_type" id="update_build_type" class="form-control" required>
+								<option value="">Selecione o tipo</option>
+								<option value="Apartamento">Apartamento</option>
+								<option value="Casa">Casa/Sobrado</option>
+								<option value="Chácara/Sítio">Chácara/Sítio</option>
+								<option value="Comercial">Comercial</option>
+								<option value="Terreno">Terreno</option>
+                            </select>
+                        </div>
                             <div class="form-group">
                                 <label for="iptu_price">Preço do IPTU</label>
                                 <input type="number" name="iptu_price" id="update_iptu_price" class="form-control" step="0.01" required>
@@ -300,40 +341,40 @@ $states = getStates($con);
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            const buildSelector = document.getElementById('build_selector');
-            const updateForm = document.getElementById('updateForm');
-            const addressInput = document.getElementById('update_address');
-            const cityInput = document.getElementById('update_city_id');
-            const stateInput = document.getElementById('update_state_id');
-            const areaTotalInput = document.getElementById('update_info_area_total');
-            const parkingSpaceInput = document.getElementById('update_info_parking_space');
-            const roomsInput = document.getElementById('update_info_rooms');
-            const neighborhoodInput = document.getElementById('update_neighborhood');
-            const condominiumPriceInput = document.getElementById('update_condominium_price');
-            const isCondominiumInput = document.getElementById('update_is_condominium');
-            const iptuPriceInput = document.getElementById('update_iptu_price');
-            const buildIdInput = document.getElementById('build_id');
+    const buildSelector = document.getElementById('build_selector');
+    const updateForm = document.getElementById('updateForm');
+    const addressInput = document.getElementById('update_address');
+    const cityInput = document.getElementById('update_city_id');
+    const stateInput = document.getElementById('update_state_id');
+    const areaTotalInput = document.getElementById('update_info_area_total');
+    const parkingSpaceInput = document.getElementById('update_info_parking_space');
+    const roomsInput = document.getElementById('update_info_rooms');
+    const bairroInput = document.getElementById('update_bairro');
+    const condominiumPriceInput = document.getElementById('update_condominium_price');
+    const iptuPriceInput = document.getElementById('update_iptu_price');
+    const buildTypeInput = document.getElementById('update_build_type');
+    const buildIdInput = document.getElementById('build_id');
 
-            buildSelector.addEventListener('change', function() {
-                if (this.value) {
-                    const selectedOption = this.options[this.selectedIndex];
-                    addressInput.value = selectedOption.getAttribute('data-address') || '';
-                    cityInput.value = selectedOption.getAttribute('data-city-id') || '';
-                    stateInput.value = selectedOption.getAttribute('data-state-id') || '';
-                    areaTotalInput.value = selectedOption.getAttribute('data-info-area-total') || '';
-                    parkingSpaceInput.value = selectedOption.getAttribute('data-info-parking-space') || '';
-                    roomsInput.value = selectedOption.getAttribute('data-info-rooms') || '';
-                    neighborhoodInput.value = selectedOption.getAttribute('data-neighborhood') || '';
-                    condominiumPriceInput.value = selectedOption.getAttribute('data-condominium-price') || '';
-                    isCondominiumInput.value = selectedOption.getAttribute('data-is-condominium') || '';
-                    iptuPriceInput.value = selectedOption.getAttribute('data-iptu-price') || '';
-                    buildIdInput.value = this.value;
-                    updateForm.style.display = 'block';
-                } else {
-                    updateForm.style.display = 'none';
-                }
-            });
-        });
+    buildSelector.addEventListener('change', function() {
+        if (this.value) {
+            const selectedOption = this.options[this.selectedIndex];
+            addressInput.value = selectedOption.getAttribute('data-address') || '';
+            cityInput.value = selectedOption.getAttribute('data-city-id') || '';
+            stateInput.value = selectedOption.getAttribute('data-state-id') || '';
+            areaTotalInput.value = selectedOption.getAttribute('data-info-area-total') || '';
+            parkingSpaceInput.value = selectedOption.getAttribute('data-info-parking-space') || '';
+            roomsInput.value = selectedOption.getAttribute('data-info-rooms') || '';
+            bairroInput.value = selectedOption.getAttribute('data-bairro') || '';
+            condominiumPriceInput.value = selectedOption.getAttribute('data-condominium-price') || '';
+            iptuPriceInput.value = selectedOption.getAttribute('data-iptu-price') || '';
+            buildTypeInput.value = selectedOption.getAttribute('data-build-type') || '';
+            buildIdInput.value = this.value;
+            updateForm.style.display = 'block';
+        } else {
+            updateForm.style.display = 'none';
+        }
+    });
+});
     </script>
 </body>
 </html>

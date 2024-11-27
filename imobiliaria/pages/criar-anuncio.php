@@ -20,15 +20,18 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $description = $_POST['description'];
     $price = $_POST['price'];
     $build_id = $_POST['build_id'];
+    $isHighlighted = isset($_POST['isHighlighted']) ? 1 : 0;  // Capture o valor do checkbox
 
-    // Insira os dados no banco de dados
-    $stmt = $con->prepare("INSERT INTO announcement (title, description, price, build_id, user_id) VALUES (?, ?, ?, ?, ?)");
+    // Prepare a declaração SQL
+    $stmt = $con->prepare("INSERT INTO announcement (title, description, price, build_id, user_id, isHighlighted) VALUES (?, ?, ?, ?, ?, ?)");
     if ($stmt === false) {
         die('Erro na preparação da declaração SQL: ' . htmlspecialchars($con->error));
     }
 
-    $stmt->bind_param("ssdii", $title, $description, $price, $build_id, $_SESSION['user_id']);
+    // Vincule os parâmetros à declaração SQL
+    $stmt->bind_param("ssdiii", $title, $description, $price, $build_id, $_SESSION['user_id'], $isHighlighted);
 
+    // Execute a declaração SQL
     if ($stmt->execute()) {
         $announcement_id = $stmt->insert_id;
         $message = "Anúncio criado com sucesso!";
@@ -52,6 +55,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $message = "Erro ao criar anúncio: " . htmlspecialchars($stmt->error);
     }
 
+    // Feche a declaração SQL
     $stmt->close();
 }
 ?>
@@ -118,6 +122,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 <label for="photos">Fotos</label>
                 <input type="file" name="photos[]" id="photos" class="form-control" multiple>
             </div>
+			<div class="form-group">
+				<input type="checkbox" name="isHighlighted" id="isHighlighted">
+				<label for="isHighlighted">Destacar Anúncio</label>
+			</div>
             <button type="submit" class="btn-yellow">Criar Anúncio</button>
         </form>
     </div>
